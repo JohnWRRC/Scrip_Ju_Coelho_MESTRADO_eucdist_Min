@@ -1,0 +1,64 @@
+#import frags
+# IMPORTANTE, nesses teste definimos nossa resolucao para 50m precisa mudar para 30 onde res for = a 50
+
+cd "E:\data_2015\Ju_coelho\areateste"
+v.in.ogr dsn=areateste.shp out=areateste_shp
+#---------------------
+
+#import hex
+cd "E:\data_2015\Ju_coelho\hex1kmteste2"
+v.in.ogr dsn=hex1kmteste2.shp out=hex1kmteste2_shp
+#-------------------
+
+#rasterizando
+g.region vect=areateste_shp res=50
+v.to.rast in=areateste_shp out=areateste_rast use=attr column=mata_Matri
+
+#-------------------------------------------
+
+# pegando centroid dos hex
+v.extract -d input=hex1kmteste2_shp output=hex1kmteste2_shp_centroid type=centroid new=-1 --o
+v.to.points in=hex1kmteste2_shp_centroid out=hex1kmteste2_shp_centroid_points
+#-------------------------------------------
+
+
+
+
+#saidinha
+cd "E:\data_2015\Ju_coelho\centroids_hex"
+
+v.out.ogr in=hex1kmteste2_shp_centroid dsn=hex1kmteste2_shp_centroid.shp type=centroid
+
+#voltando
+r.in.gdal in=hex1kmteste2_shp_centroid_rast.tif out=hex1kmteste2_shp_centroid_rast --o 
+#----------------------------------
+
+
+#aumentando os centroids
+
+r.neighbors in=hex1kmteste2_shp_centroid_rast out=hex1kmteste2_shp_centroid_rast_mwsi_15 method=maximum size=3 --o
+r.mapcalc "hex1kmteste2_shp_centroid_rast_mwsi_15Val=if(hex1kmteste2_shp_centroid_rast_mwsi_15>0,1,null())"
+
+r.grow.distance in=hex1kmteste2_shp_centroid_rast_mwsi_15Val distance=hex1kmteste2_shp_centroid_rast_mwsi_15Val_euddist --o
+#------------------
+
+# rasteriza hex
+v.to.rast in=hex1kmteste2_shp out=hex1kmteste2_rast use=attr column=HEXID
+r.colors map=hex1kmteste2_rast color=random
+
+# precisa criar o mapa com frags > 50ha
+# o mapa de input de vegetacao tem que ser rasterizado pela coluna cat!
+
+## 
+g.region rast=areateste_rast_patch_clump_mata_limpa_AreaHA
+#criando o binario
+
+r.mapcalc "areateste_rast_bin=if(isnull(areateste_rast),0,1)"
+#usando aplicativo para criar mapa de HA
+#---------------------------
+r.mapcalc "areateste_rast_cat_m50=if(areateste_rast_bin_patch_clump_mata_limpa_AreaHA>50,areateste_rast_cat,null())"
+
+
+#python...
+
+
