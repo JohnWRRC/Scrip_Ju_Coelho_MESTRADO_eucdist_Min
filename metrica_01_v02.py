@@ -26,7 +26,7 @@ del y[-1]
 txt_hex=open('txt_dist_min.txt','w')
 cabecalho='HEXID'',''ISOMEAN'',''Area_M2' ',''DistMinFrag \n'
 txt_hex.write(cabecalho)
-y_trava=y[200:201]
+y_trava=y[200:203]
 
 # esse contadoR auxilia no acumulador, uma vez que preciso saber se eh o primeiro hexagono
 contador_hexagono=0
@@ -91,7 +91,7 @@ for i in y_trava:
     listmapa_contruir=[]    
     
     #trava
-    stats_veg_split=stats_veg_split[0:5]
+    stats_veg_split=stats_veg_split[0:100]
     cont_frag_veg=0
     
     """
@@ -156,7 +156,7 @@ for i in y_trava:
             mim_univar_flt=float(mim_univar)  
             
             # se o valor do frag for maio que zero, retorna o valor do minimo
-            expressao5='frag_'+stvg+'min=if('+'frag_'+stvg+'!=0,'+`mim_univar_flt`+')'
+            expressao5='frag_'+stvg+'min=int(if('+'frag_'+stvg+'!=0,'+`mim_univar_flt`+'))'
             grass.mapcalc(expressao5, overwrite = True, quiet = True)
             
             
@@ -179,36 +179,32 @@ for i in y_trava:
     
     """
     listmapa_contruir_apoio=[]
-    x=1
-    grass.run_command('g.region',rast=listmapa_contruir)
-    for a in listmapa_contruir:  
-        if x==1:
-            
-            acumula='mapa_reconstruido'
-            expressao9=acumula+'='+a
-            grass.mapcalc(expressao9, overwrite = True, quiet = True)
-            x=2
+    x=0
+    grass.run_command('g.region',rast=rast_hex)
+    listmapa_contruir_apoio=listmapa_contruir
+    while(len(listmapa_contruir_apoio)>0):
+        if x==0:
+            expressao20='mapa_reconstruido='+listmapa_contruir_apoio[x]
+            grass.mapcalc(expressao20, overwrite = True, quiet = True)    
+            del listmapa_contruir_apoio[x]
+            x=x+1
         else:
-            acumula_temp='temp'
-            expressao9=acumula_temp+'='+a+'+'+acumula
-            grass.mapcalc(expressao9, overwrite = True, quiet = True)
-            
-            expressao10=acumula+'='+acumula_temp
-            grass.mapcalc(expressao10, overwrite = True, quiet = True)   
-            
-            grass.run_command('g.remove', flags='f',rast=acumula_temp) 
-            
-            
-           
-            
+            listmapa_contruir_apoio_2=listmapa_contruir_apoio[0:3]
+            listmapa_contruir_apoio_2.append('mapa_reconstruido')
+            grass.run_command('r.patch',input=listmapa_contruir_apoio_2,out='temp',overwrite = True)
+            expressao9='mapa_reconstruido=temp'
+            grass.mapcalc(expressao9, overwrite = True, quiet = True)   
+            #grass.run_command('g.remove', flags='f',rast='temp')
+            del listmapa_contruir_apoio[0:3]
         
-            
+       
     
-    
-    univar_mapa_contruido=grass.read_command('r.univar',map='mapa_reconstruido',fs="comma")
+    #expressao9='mapa_reconstruido=temp'
+    #grass.mapcalc(expressao9, overwrite = True, quiet = True)     
+    univar_mapa_contruido=grass.read_command('r.univar',map='temp',fs="comma")
     univar_mapa_contruido_split=univar_mapa_contruido.split('\n') 
     mim_univar_mapa_contruido_split=univar_mapa_contruido_split[6].replace('minimum: ','')
-    mim_univar_mapa_contruido_split_flt=float(mim_univar_mapa_contruido_split)
+    mim_univar_mapa_contruido_split_flt=int(mim_univar_mapa_contruido_split)
     
     
     
@@ -219,7 +215,7 @@ for i in y_trava:
     
     
     #esse mapa vai guardar o fragmento mais proximo do hexagono para pegar o ncell
-    expressao6='frag_min_dis_HEX=if(mapa_reconstruido=='+`mim_univar_mapa_contruido_split_flt`+','+`mim_univar_mapa_contruido_split_flt`+',null())'
+    expressao6='frag_min_dis_HEX=if(temp=='+`mim_univar_mapa_contruido_split_flt`+','+`mim_univar_mapa_contruido_split_flt`+',null())'
     grass.mapcalc(expressao6, overwrite = True, quiet = True)    
     
     
@@ -242,19 +238,19 @@ for i in y_trava:
     
     #pagando o mean do mapa geral
     
-    univar=grass.read_command('r.univar',map='mapa_reconstruido',fs="comma")
+    univar=grass.read_command('r.univar',map='temp',fs="comma")
     univar_split=univar.split('\n')
     mean_univar=univar_split[9].replace('mean: ','')
     
     mean_univar_flt=float(mean_univar)
     txt_hex.write(i+','+mean_univar+','+`area_ha_frag_mais_prox`+','+`mim_univar_mapa_contruido_split_flt`+'\n')
-    
-    for rm in list_map_rm:   
-        grass.run_command('g.remove', flags='f',rast=rm)    
+    grass.run_command('g.remove', flags='f',rast='mapa_reconstruido')
+    #for rm in list_map_rm:   
+        #grass.run_command('g.remove', flags='f',rast=rm)    
 
           
 txt_hex.close()
-grass.run_command('g.remove', flags='f',rast='hexmask,veg_mask,vegcompltemp,vegunique_euc,vegunique_euc_apoio,dist_from_HEX')
+#grass.run_command('g.remove', flags='f',rast='hexmask,veg_mask,vegcompltemp,vegunique_euc,vegunique_euc_apoio,dist_from_HEX')
     
     
     
