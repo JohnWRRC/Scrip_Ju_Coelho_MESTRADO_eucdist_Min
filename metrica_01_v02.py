@@ -5,8 +5,8 @@ import os
 
 grass.run_command('r.mask',flags='r')
 os.chdir(r'E:\data_2015\Ju_coelho\grass_2\txt-saidas')
-rast_hex='hex1kmteste2_rast'
-mapa_veg='areateste_rast_cat'
+rast_hex='hex1kmteste2_rast' #mapa hexagono
+mapa_veg='areateste_rast_cat' # mapa veg ids
 
 
 """
@@ -26,7 +26,8 @@ del y[-1]
 txt_hex=open('txt_dist_min.txt','w')
 cabecalho='HEXID'',''ISOMEAN'',''Area_M2' ',''DistMinFrag \n'
 txt_hex.write(cabecalho)
-y_trava=y[200:203]
+
+y_trava=y[200:203] # 
 
 # esse contadoR auxilia no acumulador, uma vez que preciso saber se eh o primeiro hexagono
 contador_hexagono=0
@@ -60,7 +61,7 @@ for i in y_trava:
     fragmentos.
     mapa gerado nesse passo: vegunique_euc 
     """
-    expressao4='vegunique_euc=areateste_rast_bin*dist_from_HEX'
+    expressao4='vegunique_euc=areateste_rast_bin*dist_from_HEX' # mapa vegetacao binario
     grass.mapcalc(expressao4, overwrite = True, quiet = True) 
     
     
